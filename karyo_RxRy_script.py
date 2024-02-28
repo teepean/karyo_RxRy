@@ -205,11 +205,11 @@ else:
 
 if options.chr21:
     if not options.noheader:
-        print('Na\tRx\tRx_SE\tRy\tRy_SE\tAssignment\tR21\tR21_SE')
-    print('\t'.join([str(total_chr), str(Rx), str(xSE), str(Ry), str(ySE), str(sex), str(R21), str(SE_21)]))
+        print('Filename\tNa\tRx\tRx_SE\tRy\tRy_SE\tAssignment\tR21\tR21_SE')
+    print('\t'.join([str(options.filename), str(total_chr), str(Rx), str(xSE), str(Ry), str(ySE), str(sex), str(R21), str(SE_21)]))
 else:
     if not options.noheader:
-        print('Na\tRx\tRxSE\tRy\tRySE\tAssignment')
-    print('\t'.join([str(total_chr), str(Rx), str(xSE), str(Ry), str(ySE), str(sex)]))
+        print('Filename\tNa\tRx\tRxSE\tRy\tRySE\tAssignment')
+    print('\t'.join([str(options.filename), str(total_chr), str(Rx), str(xSE), str(Ry), str(ySE), str(sex)]))
 
 exit(0)
