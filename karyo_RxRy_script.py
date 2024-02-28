@@ -1,21 +1,22 @@
 """
-Version: 	
-Author:		Kyriaki Anastasiadou; Pontus Skoglund
-Contact: 	kyriaki.anastasiadou@crick.ac.uk; pontus.skoglund@gmail.com
-Date: 		12/09/2023
-Citation: 	TBD
-Usage:		BAM input (suggested -q 30), estimation of sequencing reads aligning to single chromosomes (chrX, chrY, chr21) over autosomal baseline, sex inference.
-Example:	Output:		[Total number of alignments in input] [Rx] [SE for Rx] [Ry] [SE for Ry] [Inferred sex]
+Version:     
+Author:        Kyriaki Anastasiadou; Pontus Skoglund
+Contact:     kyriaki.anastasiadou@crick.ac.uk; pontus.skoglund@gmail.com
+Date:         12/09/2023
+Citation:     TBD
+Usage:        BAM input (suggested -q 30), estimation of sequencing reads aligning to single chromosomes (chrX, chrY, chr21) over autosomal baseline, sex inference.
+Example:    Output:        [Total number of alignments in input] [Rx] [SE for Rx] [Ry] [SE for Ry] [Inferred sex]
 """
 
 import sys
 import math
-
+import subprocess
 from optparse import OptionParser
 
-
-usage = "usage: %prog [options] <SAM formatted data from stdin>"
+usage = "usage: %prog [options] <BAM file>"
 parser = OptionParser(usage=usage)
+parser.add_option("-f", "--file", action="store", type="string", dest="filename", help="Input BAM file")
+parser.add_option("-q", "--quality", action="store", type="int", dest="quality", default=0, help="Minimum mapping quality for reads to be considered")
 parser.add_option("--chrXname", action="store", type="string", dest="chrXname",help="Identifier for the X chromosome in the SAM input (use if different than chrX, X etc)",default="X")
 parser.add_option("--chrYname", action="store", type="string", dest="chrYname",help="Identifier for the Y chromosome in the SAM input (use if different than chrY, Y etc)",default="Y")
 parser.add_option("--chr1name", action="store", type="string", dest="chr1name",help="Identifier for chromosome 1 in the SAM input (use if different than chr1, 1 etc)",default="1")
@@ -48,9 +49,11 @@ parser.add_option("--chr21", action="store_true", dest="chr21",help="Use to prin
 
 (options, args) = parser.parse_args()
 
+if not options.filename:
+    parser.error('BAM file not given')
 
-def binomialSE(estimate,totalnumber):
-        return math.sqrt((estimate*(1.0-estimate))/totalnumber)
+def binomialSE(estimate, totalnumber):
+    return math.sqrt((estimate * (1.0 - estimate)) / totalnumber)
 
 chrYcount=0
 chrXcount=0
@@ -78,39 +81,41 @@ chr21count=0
 chr22count=0
 totalcount=0
 
+# Use subprocess to call samtools view
+cmd = ['samtools', 'view', '-q', str(options.quality), options.filename]
+proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-for line in sys.stdin:
-	if line[0] == '@':continue
-	col=line.split()
-	totalcount += 1
-	chromosome=col[2].lstrip('chr')
-	
+for line in proc.stdout:
+    if line[0] == '@':
+        continue
+    col = line.split()
+    totalcount += 1
+    chromosome = col[2].lstrip('chr')
 
-	
-	if options.chrYname == chromosome: chrYcount += 1
-	elif options.chrXname == chromosome: chrXcount += 1
-	elif options.chr1name == chromosome: chr1count += 1
-	elif options.chr2name == chromosome: chr2count += 1
-	elif options.chr3name == chromosome: chr3count += 1
-	elif options.chr4name == chromosome: chr4count += 1
-	elif options.chr5name == chromosome: chr5count += 1
-	elif options.chr6name == chromosome: chr6count += 1
-	elif options.chr7name == chromosome: chr7count += 1
-	elif options.chr8name == chromosome: chr8count += 1
-	elif options.chr9name == chromosome: chr9count += 1
-	elif options.chr10name == chromosome: chr10count += 1
-	elif options.chr11name == chromosome: chr11count += 1
-	elif options.chr12name == chromosome: chr12count += 1
-	elif options.chr13name == chromosome: chr13count += 1
-	elif options.chr14name == chromosome: chr14count += 1
-	elif options.chr15name == chromosome: chr15count += 1
-	elif options.chr16name == chromosome: chr16count += 1
-	elif options.chr17name == chromosome: chr17count += 1
-	elif options.chr18name == chromosome: chr18count += 1
-	elif options.chr19name == chromosome: chr19count += 1
-	elif options.chr20name == chromosome: chr20count += 1
-	elif options.chr21name == chromosome: chr21count += 1
-	elif options.chr22name == chromosome: chr22count += 1
+    if options.chrYname == chromosome: chrYcount += 1
+    elif options.chrXname == chromosome: chrXcount += 1
+    elif options.chr1name == chromosome: chr1count += 1
+    elif options.chr2name == chromosome: chr2count += 1
+    elif options.chr3name == chromosome: chr3count += 1
+    elif options.chr4name == chromosome: chr4count += 1
+    elif options.chr5name == chromosome: chr5count += 1
+    elif options.chr6name == chromosome: chr6count += 1
+    elif options.chr7name == chromosome: chr7count += 1
+    elif options.chr8name == chromosome: chr8count += 1
+    elif options.chr9name == chromosome: chr9count += 1
+    elif options.chr10name == chromosome: chr10count += 1
+    elif options.chr11name == chromosome: chr11count += 1
+    elif options.chr12name == chromosome: chr12count += 1
+    elif options.chr13name == chromosome: chr13count += 1
+    elif options.chr14name == chromosome: chr14count += 1
+    elif options.chr15name == chromosome: chr15count += 1
+    elif options.chr16name == chromosome: chr16count += 1
+    elif options.chr17name == chromosome: chr17count += 1
+    elif options.chr18name == chromosome: chr18count += 1
+    elif options.chr19name == chromosome: chr19count += 1
+    elif options.chr20name == chromosome: chr20count += 1
+    elif options.chr21name == chromosome: chr21count += 1
+    elif options.chr22name == chromosome: chr22count += 1
 
 
 #Chr1 to Chr22 sum, excluding 13, 18 and 21
@@ -135,80 +140,76 @@ SE_21=binomialSE(R21,(total_chr))
 #Define values for 1240k SNPs
 
 if options.capture1240k: 
-	# if 1240k here
-	XYlowerRy = 0.004
-	XYupperRy = 0.03
-	XYlowerRx = 0.011
-	XYupperRx = 0.034
-	XXlowerRy = 0
-	XXupperRy = 0.0005
-	XXlowerRx = 0.035
-	XXupperRx = 0.058
-	XXXlowerRx = 0.059
-	XXXupperRx = 0.082
-	
+    # if 1240k here
+    XYlowerRy = 0.004
+    XYupperRy = 0.03
+    XYlowerRx = 0.011
+    XYupperRx = 0.034
+    XXlowerRy = 0
+    XXupperRy = 0.0005
+    XXlowerRx = 0.035
+    XXupperRx = 0.058
+    XXXlowerRx = 0.059
+    XXXupperRx = 0.082
+    
 else:
-	XYlowerRy = 0.0019
-	XYupperRy = 0.0032
-	XYlowerRx = 0.020
-	XYupperRx = 0.037
-	XXlowerRy = 0
-	XXupperRy = 0.0005
-	XXlowerRx = 0.047
-	XXupperRx = 0.063
-	XXXlowerRx = 0.072
-	XXXupperRx = 0.1
-	
-
+    XYlowerRy = 0.0019
+    XYupperRy = 0.0032
+    XYlowerRx = 0.020
+    XYupperRx = 0.037
+    XXlowerRy = 0
+    XXupperRy = 0.0005
+    XXlowerRx = 0.047
+    XXupperRx = 0.063
+    XXXlowerRx = 0.072
+    XXXupperRx = 0.1
+    
 
 #Assign sex
 
 sex='NA'
 if chr1count <= 100:
-	sex = 'Not_Assigned_low_coverage'
+    sex = 'Not_Assigned_low_coverage'
 else:
-	if XYlowerRy <= Ry <= XYupperRy:
-		if XYlowerRx <= Rx <= XYupperRx:
-			sex = 'XY'
-		elif XXlowerRx <= Rx <= XXupperRx:
-			sex = 'XXY'
-		elif Rx <= XYlowerRx:
-			sex = 'Consistent_with_XY'
-	elif Ry >= XYupperRy:
-		sex = 'XYY'
-	elif XXlowerRy <= Ry <= XXupperRy:
-		if XXlowerRx <= Rx <= XXupperRx:
-			sex = 'XX'
-		elif XYlowerRx <= Rx <= XYupperRx:
-			sex = 'X0'
-		elif XXXlowerRx <= Rx <= XXXupperRx:
-			sex = 'XXX'
-		elif Rx <= XXlowerRx or XXupperRx <= Rx:
-			sex = 'Consistent_with_XX'
-	elif XYlowerRy <= (Ry-ySE) <= XYupperRy or XYlowerRy <= (Ry+ySE) <= XYupperRy:
-		if XYlowerRx <= (Rx-xSE) <= XYupperRx or XYlowerRx <= (Rx+xSE) <= XYupperRx:
-			sex = 'Consistent_with_XY'
-		else:
-			Sex = 'Contamination'
-	elif XXlowerRy <= (Ry-ySE) <= XXupperRy or XXlowerRy <= (Ry+ySE) <= XXupperRy:
-		if XXlowerRx <= (Rx-xSE) <= XXupperRx or XXlowerRx <= (Rx+xSE) <= XXupperRx:
-			sex = 'Consistent_with_XX'
-		else: 
-			sex = 'Contamination' 
+    if XYlowerRy <= Ry <= XYupperRy:
+        if XYlowerRx <= Rx <= XYupperRx:
+            sex = 'XY'
+        elif XXlowerRx <= Rx <= XXupperRx:
+            sex = 'XXY'
+        elif Rx <= XYlowerRx:
+            sex = 'Consistent_with_XY'
+    elif Ry >= XYupperRy:
+        sex = 'XYY'
+    elif XXlowerRy <= Ry <= XXupperRy:
+        if XXlowerRx <= Rx <= XXupperRx:
+            sex = 'XX'
+        elif XYlowerRx <= Rx <= XYupperRx:
+            sex = 'X0'
+        elif XXXlowerRx <= Rx <= XXXupperRx:
+            sex = 'XXX'
+        elif Rx <= XXlowerRx or XXupperRx <= Rx:
+            sex = 'Consistent_with_XX'
+    elif XYlowerRy <= (Ry-ySE) <= XYupperRy or XYlowerRy <= (Ry+ySE) <= XYupperRy:
+        if XYlowerRx <= (Rx-xSE) <= XYupperRx or XYlowerRx <= (Rx+xSE) <= XYupperRx:
+            sex = 'Consistent_with_XY'
+        else:
+            Sex = 'Contamination'
+    elif XXlowerRy <= (Ry-ySE) <= XXupperRy or XXlowerRy <= (Ry+ySE) <= XXupperRy:
+        if XXlowerRx <= (Rx-xSE) <= XXupperRx or XXlowerRx <= (Rx+xSE) <= XXupperRx:
+            sex = 'Consistent_with_XX'
+        else: 
+            sex = 'Contamination' 
 
-	else:
-     		sex = 'Contamination'
+    else:
+             sex = 'Contamination'
 
-
-
-if options.chr21: 
-	if options.noheader == False:
-		print 'Na\tRx\tRx_SE\tRy\tRy_SE\tAssignment\tR21\tR21_SE'
-	print '\t'.join([str(total_chr),str(Rx),str(xSE),str(Ry),str(ySE),str(sex),str(R21),str(SE_21)])
+if options.chr21:
+    if not options.noheader:
+        print('Na\tRx\tRx_SE\tRy\tRy_SE\tAssignment\tR21\tR21_SE')
+    print('\t'.join([str(total_chr), str(Rx), str(xSE), str(Ry), str(ySE), str(sex), str(R21), str(SE_21)]))
 else:
-	if options.noheader == False:
-		print 'Na\tRx\tRxSE\tRy\tRySE\tAssignment'
-	print '\t'.join([str(total_chr),str(Rx),str(xSE),str(Ry),str(ySE),str(sex)])
+    if not options.noheader:
+        print('Na\tRx\tRxSE\tRy\tRySE\tAssignment')
+    print('\t'.join([str(total_chr), str(Rx), str(xSE), str(Ry), str(ySE), str(sex)]))
 
 exit(0)
-
