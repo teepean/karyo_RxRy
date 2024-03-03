@@ -1,4 +1,7 @@
 # karyo_RxRy
+
+This is a modifed from the original version so that it uses Python 3 and external samtools.
+
 Script for karyotypic sex inference and detection of autosomal and sex chromosomal aneuploidies using ancient DNA.  
 The script is an update to Skoglund et al. 2013 (https://github.com/pontussk/ry_compute), identifying individuals with possible 
 sex karyotypes: **46XX, 46XY, 47XXX, 47XXY, 47XYY, 45X0**, as well as additional copies of chromosome 21.  
